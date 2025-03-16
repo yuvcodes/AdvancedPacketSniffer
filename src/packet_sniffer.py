@@ -1,16 +1,16 @@
 import socket
 import struct
 import argparse
-from scapy.all import sniff, Ether, IP, IPv6, TCP, UDP, ICMPv6EchoRequest, ICMPv6EchoReply, conf
+from scapy.all import sniff, Ether, IP, IPv6, TCP, UDP, ICMP, ICMPv6EchoRequest, ICMPv6EchoReply, conf
 
 # Argument parser for optional features
 parser = argparse.ArgumentParser(description="Advanced Packet Sniffer with DNS Resolution")
-parser.add_argument("--resolve", action="store_true", help="Resolve IP addresses to hostnames")
+parser.add_argument("--resolve-ip", action="store_true", help="Resolve IP addresses to hostnames")
 args = parser.parse_args()
 
 def resolve_ip(ip_address):
-    """Resolve an IP address to a hostname if --resolve is enabled."""
-    if args.resolve:
+    """Resolve an IP address to a hostname if --resolve-ip is enabled."""
+    if args.resolve_ip:
         try:
             hostname = socket.gethostbyaddr(ip_address)[0]
             return f"{hostname} ({ip_address})"
@@ -86,6 +86,11 @@ def packet_callback(packet):
                 print(f"    - UDP Segment: {src_port} -> {dest_port}")
                 print(f"      - Length: {length}, Checksum: {checksum}")
                 print(f"      - Data: {udp_data.hex()}")
+
+            elif packet[IP].proto == 1 and ICMP in packet:  # ICMP
+                print("    - ICMP Packet:")
+                print(f"      - Type: {packet[ICMP].type}, Code: {packet[ICMP].code}")
+                print(f"      - Data: {bytes(packet[ICMP].payload).hex()}")
 
         # IPv6 Packet
         elif IPv6 in packet:
